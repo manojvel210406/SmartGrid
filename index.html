@@ -1,0 +1,2795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚡ SmartGrid Digital Twin — v2.0</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-void: #020408;
+    --bg-deep: #060d14;
+    --bg-panel: #080f1a;
+    --bg-card: #0a1525;
+    --bg-elevated: #0d1e33;
+    --border: #0f2a45;
+    --border-glow: #1a4a7a;
+    --accent-cyan: #00d4ff;
+    --accent-blue: #0080ff;
+    --accent-green: #00ff88;
+    --accent-yellow: #ffcc00;
+    --accent-red: #ff3355;
+    --accent-orange: #ff6600;
+    --accent-purple: #8855ff;
+    --text-primary: #e0f0ff;
+    --text-secondary: #6a90b0;
+    --text-dim: #334466;
+    --glow-cyan: 0 0 20px rgba(0,212,255,0.4);
+    --glow-green: 0 0 20px rgba(0,255,136,0.4);
+    --glow-red: 0 0 20px rgba(255,51,85,0.4);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg-void);
+    color: var(--text-primary);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  /* Scanline overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,20,40,0.03) 2px, rgba(0,20,40,0.03) 4px);
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  #root { height: 100vh; width: 100vw; }
+
+  .app-shell {
+    display: grid;
+    grid-template-rows: 46px 1fr 160px;
+    grid-template-columns: 280px 1fr 320px;
+    height: 100vh;
+    gap: 1px;
+    background: #010810;
+  }
+
+  /* TOP BAR */
+  .topbar {
+    grid-column: 1 / -1;
+    background: linear-gradient(90deg, #020c18, #041020, #020c18);
+    border-bottom: 1px solid var(--border-glow);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 8px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .topbar::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+    animation: scanline 4s linear infinite;
+  }
+
+  @keyframes scanline {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  .logo {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 14px;
+    color: var(--accent-cyan);
+    text-shadow: var(--glow-cyan);
+    margin-right: 12px;
+    white-space: nowrap;
+    letter-spacing: 2px;
+  }
+
+  .logo span { color: var(--accent-green); }
+
+  .btn-group { display: flex; gap: 4px; align-items: center; }
+  .sep { width: 1px; height: 24px; background: var(--border); margin: 0 6px; }
+
+  .btn {
+    padding: 5px 12px;
+    border: 1px solid var(--border-glow);
+    background: rgba(0,100,200,0.08);
+    color: var(--accent-cyan);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+    white-space: nowrap;
+  }
+
+  .btn:hover {
+    background: rgba(0,212,255,0.15);
+    border-color: var(--accent-cyan);
+    box-shadow: var(--glow-cyan);
+    color: #fff;
+  }
+
+  .btn.primary {
+    background: rgba(0,212,255,0.15);
+    border-color: var(--accent-cyan);
+  }
+
+  .btn.danger { color: var(--accent-red); border-color: #ff335566; }
+  .btn.danger:hover { background: rgba(255,51,85,0.15); box-shadow: var(--glow-red); }
+  .btn.success { color: var(--accent-green); border-color: #00ff8866; }
+  .btn.success:hover { background: rgba(0,255,136,0.15); box-shadow: var(--glow-green); }
+  .btn.active { background: rgba(0,212,255,0.25); border-color: var(--accent-cyan); color: #fff; box-shadow: var(--glow-cyan); }
+
+  .btn.running {
+    animation: pulse-btn 1s ease-in-out infinite;
+    background: rgba(0,212,255,0.2);
+    color: #fff;
+  }
+
+  @keyframes pulse-btn {
+    0%, 100% { box-shadow: 0 0 5px rgba(0,212,255,0.3); }
+    50% { box-shadow: 0 0 20px rgba(0,212,255,0.7); }
+  }
+
+  .status-pill {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    font-size: 10px;
+    font-family: 'Share Tech Mono', monospace;
+    letter-spacing: 1px;
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    animation: blink 2s ease infinite;
+  }
+
+  .status-dot.green { background: var(--accent-green); box-shadow: var(--glow-green); }
+  .status-dot.yellow { background: var(--accent-yellow); }
+  .status-dot.red { background: var(--accent-red); animation: blink-fast 0.5s ease infinite; }
+
+  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+  @keyframes blink-fast { 0%,100% { opacity: 1; } 50% { opacity: 0.1; } }
+
+  .mode-btn {
+    padding: 4px 8px;
+    font-size: 10px;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    letter-spacing: 1px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+
+  .mode-btn.active {
+    background: rgba(136,85,255,0.2);
+    border-color: var(--accent-purple);
+    color: var(--accent-purple);
+  }
+
+  /* PANELS */
+  .panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .panel-header {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-deep);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  .panel-header .icon {
+    width: 16px;
+    height: 16px;
+    background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+    flex-shrink: 0;
+  }
+
+  .panel-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-glow) transparent;
+  }
+
+  /* LEFT PANEL */
+  .left-panel { grid-row: 2; grid-column: 1; }
+
+  .section-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 8px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    padding: 6px 4px 4px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 6px;
+  }
+
+  .form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 6px;
+  }
+
+  .form-label {
+    font-size: 10px;
+    color: var(--text-secondary);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .form-input {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 5px 8px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+
+  .form-input:focus { border-color: var(--accent-cyan); box-shadow: 0 0 8px rgba(0,212,255,0.2); }
+
+  .form-select {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 5px 8px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    outline: none;
+    width: 100%;
+    cursor: pointer;
+  }
+
+  .form-select option { background: var(--bg-deep); }
+
+  .component-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+
+  .comp-btn {
+    padding: 8px 6px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    letter-spacing: 0.5px;
+  }
+
+  .comp-btn:hover {
+    border-color: var(--accent-cyan);
+    color: var(--accent-cyan);
+    background: rgba(0,212,255,0.08);
+  }
+
+  .comp-btn .comp-icon { font-size: 16px; display: block; margin-bottom: 2px; }
+
+  .bus-list-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 6px;
+    border: 1px solid var(--border);
+    margin-bottom: 3px;
+    background: var(--bg-card);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .bus-list-item:hover { border-color: var(--accent-cyan); background: var(--bg-elevated); }
+  .bus-list-item.selected { border-color: var(--accent-cyan); background: rgba(0,212,255,0.08); }
+
+  .bus-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .bus-type-badge {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    padding: 1px 4px;
+    border: 1px solid;
+    margin-left: auto;
+  }
+
+  .badge-slack { color: var(--accent-cyan); border-color: var(--accent-cyan); background: rgba(0,212,255,0.1); }
+  .badge-pv { color: var(--accent-green); border-color: var(--accent-green); background: rgba(0,255,136,0.1); }
+  .badge-pq { color: var(--text-secondary); border-color: var(--border); }
+
+  /* CENTER CANVAS */
+  .center-panel {
+    grid-row: 2;
+    grid-column: 2;
+    position: relative;
+    background: var(--bg-void);
+    overflow: hidden;
+  }
+
+  canvas.grid-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .canvas-toolbar {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 10;
+  }
+
+  .canvas-toolbar .btn {
+    padding: 6px 8px;
+    font-size: 14px;
+    clip-path: none;
+    width: 34px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .view-toggle {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 4px;
+    z-index: 10;
+  }
+
+  .minimap {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    width: 120px;
+    height: 80px;
+    border: 1px solid var(--border-glow);
+    background: rgba(4,10,20,0.9);
+    z-index: 10;
+  }
+
+  .timeline-bar {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 400px;
+    background: rgba(4,10,20,0.95);
+    border: 1px solid var(--border-glow);
+    padding: 8px 12px;
+    z-index: 10;
+  }
+
+  .timeline-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    color: var(--text-secondary);
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+
+  input[type=range] {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 3px;
+    background: var(--border);
+    outline: none;
+    cursor: pointer;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    background: var(--accent-cyan);
+    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+    cursor: pointer;
+  }
+
+  input[type=range].danger-range::-webkit-slider-thumb { background: var(--accent-red); }
+  input[type=range].warning-range::-webkit-slider-thumb { background: var(--accent-yellow); }
+
+  /* THREE JS CONTAINER */
+  #three-container {
+    position: absolute;
+    inset: 0;
+    display: none;
+  }
+
+  #three-container.visible { display: block; }
+
+  /* RIGHT PANEL */
+  .right-panel { grid-row: 2; grid-column: 3; }
+
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-deep);
+    flex-shrink: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .tab {
+    padding: 7px 10px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+    text-transform: uppercase;
+  }
+
+  .tab.active {
+    color: var(--accent-cyan);
+    border-bottom-color: var(--accent-cyan);
+    background: rgba(0,212,255,0.05);
+  }
+
+  .tab:hover { color: var(--text-primary); }
+
+  .result-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+  }
+
+  .result-table th {
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+    padding: 5px 6px;
+    text-align: left;
+    font-weight: 400;
+    letter-spacing: 1px;
+    font-size: 9px;
+    border: 1px solid var(--border);
+    text-transform: uppercase;
+  }
+
+  .result-table td {
+    padding: 5px 6px;
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+  }
+
+  .result-table tr:hover td { background: var(--bg-elevated); }
+
+  .val-normal { color: var(--accent-green); }
+  .val-warning { color: var(--accent-yellow); }
+  .val-critical { color: var(--accent-red); }
+
+  .metric-card {
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    padding: 8px 10px;
+    margin-bottom: 4px;
+  }
+
+  .metric-label {
+    font-size: 9px;
+    color: var(--text-secondary);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .metric-value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent-cyan);
+    text-shadow: var(--glow-cyan);
+    line-height: 1.2;
+  }
+
+  .metric-value.green { color: var(--accent-green); text-shadow: var(--glow-green); }
+  .metric-value.red { color: var(--accent-red); text-shadow: var(--glow-red); }
+
+  .mini-chart { height: 120px; position: relative; }
+  .chart-canvas-wrap { height: 100%; }
+
+  /* BOTTOM PANEL */
+  .bottom-panel {
+    grid-column: 1 / -1;
+    background: var(--bg-panel);
+    border-top: 1px solid var(--border-glow);
+    display: flex;
+    overflow: hidden;
+  }
+
+  .bottom-section {
+    flex: 1;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .bottom-section:last-child { border-right: none; }
+
+  .bottom-header {
+    padding: 6px 10px;
+    background: var(--bg-deep);
+    border-bottom: 1px solid var(--border);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 8px;
+    letter-spacing: 2px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .log-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px 8px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    line-height: 1.6;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .log-entry { display: flex; gap: 6px; margin-bottom: 1px; }
+  .log-time { color: var(--text-dim); flex-shrink: 0; }
+  .log-text { color: var(--text-secondary); }
+  .log-text.info { color: var(--accent-cyan); }
+  .log-text.success { color: var(--accent-green); }
+  .log-text.warn { color: var(--accent-yellow); }
+  .log-text.error { color: var(--accent-red); }
+
+  .insight-card {
+    margin: 6px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    border-left: 3px solid var(--accent-cyan);
+  }
+
+  .insight-card.warn { border-left-color: var(--accent-yellow); }
+  .insight-card.error { border-left-color: var(--accent-red); }
+  .insight-card.success { border-left-color: var(--accent-green); }
+
+  .insight-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 3px;
+  }
+
+  .insight-body {
+    font-size: 10px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  .insight-body b { color: var(--accent-cyan); }
+
+  .step-box {
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    margin: 4px 6px;
+    font-size: 10px;
+    color: var(--text-secondary);
+  }
+
+  .step-eq {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--accent-cyan);
+    padding: 4px 0;
+  }
+
+  /* DISTURBANCE PANEL */
+  .disturbance-panel {
+    position: absolute;
+    top: 50px;
+    right: 10px;
+    width: 200px;
+    background: rgba(4,10,20,0.96);
+    border: 1px solid var(--border-glow);
+    padding: 10px;
+    z-index: 20;
+    display: none;
+  }
+
+  .disturbance-panel.open { display: block; }
+
+  .slider-row {
+    margin-bottom: 8px;
+  }
+
+  .slider-row label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--text-secondary);
+    margin-bottom: 3px;
+  }
+
+  /* LOADING OVERLAY */
+  .calc-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(2,4,8,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    display: none;
+  }
+
+  .calc-overlay.active { display: flex; }
+
+  .calc-box {
+    border: 1px solid var(--accent-cyan);
+    background: var(--bg-panel);
+    padding: 30px 40px;
+    text-align: center;
+    box-shadow: var(--glow-cyan);
+  }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent-cyan);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 12px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .progress-bar {
+    width: 200px;
+    height: 3px;
+    background: var(--border);
+    margin: 8px auto 0;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+    transition: width 0.3s;
+  }
+
+  /* TOOLTIP */
+  .tooltip {
+    position: fixed;
+    background: var(--bg-elevated);
+    border: 1px solid var(--accent-cyan);
+    padding: 8px 12px;
+    font-size: 11px;
+    pointer-events: none;
+    z-index: 500;
+    max-width: 200px;
+    box-shadow: var(--glow-cyan);
+    display: none;
+  }
+
+  .tooltip.visible { display: block; }
+
+  /* AI ASSISTANT */
+  .ai-panel {
+    position: absolute;
+    bottom: 170px;
+    left: 290px;
+    width: 280px;
+    background: rgba(4,10,20,0.97);
+    border: 1px solid var(--accent-purple);
+    z-index: 20;
+    box-shadow: 0 0 30px rgba(136,85,255,0.3);
+    display: none;
+  }
+
+  .ai-panel.open { display: block; }
+
+  .ai-header {
+    padding: 8px 12px;
+    background: rgba(136,85,255,0.1);
+    border-bottom: 1px solid rgba(136,85,255,0.3);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--accent-purple);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .ai-body { padding: 10px 12px; max-height: 250px; overflow-y: auto; }
+
+  .ai-msg {
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 8px;
+  }
+
+  .ai-msg b { color: var(--accent-purple); }
+
+  .ai-suggestion {
+    padding: 6px 8px;
+    border: 1px solid rgba(136,85,255,0.3);
+    background: rgba(136,85,255,0.05);
+    cursor: pointer;
+    margin-bottom: 4px;
+    font-size: 10px;
+    color: var(--text-secondary);
+    transition: all 0.2s;
+  }
+
+  .ai-suggestion:hover {
+    background: rgba(136,85,255,0.15);
+    color: var(--accent-purple);
+  }
+
+  /* FAULT ANIMATION */
+  @keyframes fault-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.3); }
+  }
+
+  @keyframes flow-particle {
+    0% { stroke-dashoffset: 0; }
+    100% { stroke-dashoffset: -60; }
+  }
+
+  .flow-line {
+    stroke-dasharray: 10 5;
+    animation: flow-particle 1s linear infinite;
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-glow); border-radius: 2px; }
+
+  /* Voltage bar */
+  .volt-bar {
+    height: 4px;
+    background: var(--border);
+    margin-top: 4px;
+    position: relative;
+  }
+
+  .volt-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    transition: width 0.5s, background 0.5s;
+  }
+
+  /* notification */
+  .notif {
+    position: fixed;
+    top: 55px;
+    right: 15px;
+    padding: 10px 16px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-glow);
+    border-left: 3px solid var(--accent-cyan);
+    font-size: 12px;
+    z-index: 999;
+    animation: slideIn 0.3s ease;
+    max-width: 280px;
+  }
+
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  .grid-floor-canvas { position: absolute; inset: 0; opacity: 0.3; pointer-events: none; }
+
+  /* report styles */
+  .report-preview {
+    position: fixed;
+    inset: 60px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-glow);
+    z-index: 900;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    display: none;
+  }
+
+  .report-preview.open { display: flex; }
+
+  .btn-icon { font-size: 14px; margin-right: 4px; }
+
+  /* Three.js overlay label style */
+  .three-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--accent-cyan);
+    background: rgba(4,10,20,0.8);
+    padding: 2px 4px;
+    border: 1px solid var(--border);
+    pointer-events: none;
+    position: absolute;
+    white-space: nowrap;
+    display: none;
+  }
+
+  .challenge-banner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    background: rgba(4,10,20,0.97);
+    border: 2px solid var(--accent-yellow);
+    padding: 20px 30px;
+    z-index: 50;
+    text-align: center;
+    box-shadow: 0 0 40px rgba(255,204,0,0.3);
+    display: none;
+  }
+
+  .challenge-banner.open { display: block; }
+
+  .challenge-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px;
+    color: var(--accent-yellow);
+    margin-bottom: 10px;
+  }
+
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div class="tooltip" id="global-tooltip"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+// ==========================================
+// POWER SYSTEM MATH ENGINE
+// ==========================================
+const PowerEngine = {
+  buildYBus(buses, lines) {
+    const n = buses.length;
+    const Y = Array.from({length: n}, () => Array.from({length: n}, () => ({re: 0, im: 0})));
+
+    for (const line of lines) {
+      if (!line.active) continue;
+      const i = buses.findIndex(b => b.id === line.from);
+      const j = buses.findIndex(b => b.id === line.to);
+      if (i < 0 || j < 0) continue;
+
+      const z = {re: line.r, im: line.x};
+      const zmag2 = z.re*z.re + z.im*z.im;
+      const y = {re: z.re/zmag2, im: -z.im/zmag2};
+      const b_shunt = line.b / 2;
+
+      Y[i][i].re += y.re;
+      Y[i][i].im += y.im + b_shunt;
+      Y[j][j].re += y.re;
+      Y[j][j].im += y.im + b_shunt;
+      Y[i][j].re -= y.re;
+      Y[i][j].im -= y.im;
+      Y[j][i].re -= y.re;
+      Y[j][i].im -= y.im;
+    }
+
+    return Y;
+  },
+
+  newtonRaphson(buses, lines, maxIter = 50, tol = 1e-6) {
+    const n = buses.length;
+    const Y = this.buildYBus(buses, lines);
+    const steps = [];
+
+    let V = buses.map(b => b.v || 1.0);
+    let theta = buses.map(b => b.angle ? b.angle * Math.PI / 180 : 0);
+
+    steps.push({step: 0, desc: 'Y-Bus formed, initial voltages set', maxMismatch: null});
+
+    let converged = false;
+    let iter = 0;
+
+    for (iter = 1; iter <= maxIter; iter++) {
+      const P_calc = new Array(n).fill(0);
+      const Q_calc = new Array(n).fill(0);
+
+      for (let i = 0; i < n; i++) {
+        for (let j = 0; j < n; j++) {
+          const tij = theta[i] - theta[j];
+          const G = Y[i][j].re, B = Y[i][j].im;
+          P_calc[i] += V[i] * V[j] * (G * Math.cos(tij) + B * Math.sin(tij));
+          Q_calc[i] += V[i] * V[j] * (G * Math.sin(tij) - B * Math.cos(tij));
+        }
+      }
+
+      let maxMismatch = 0;
+      const dP = [], dQ = [];
+
+      for (let i = 0; i < n; i++) {
+        const bus = buses[i];
+        if (bus.type === 'slack') { dP.push(0); dQ.push(0); continue; }
+        const dp = (bus.pg - bus.pl) - P_calc[i];
+        dP.push(dp);
+        if (bus.type === 'pq') {
+          const dq = -(bus.qg - bus.ql) - Q_calc[i];
+          dQ.push(dq);
+          maxMismatch = Math.max(maxMismatch, Math.abs(dp), Math.abs(dq));
+        } else {
+          dQ.push(0);
+          maxMismatch = Math.max(maxMismatch, Math.abs(dp));
+        }
+      }
+
+      steps.push({
+        step: iter,
+        desc: `Iteration ${iter}: Max mismatch = ${maxMismatch.toExponential(4)}`,
+        maxMismatch,
+        Pcalc: [...P_calc],
+        Qcalc: [...Q_calc]
+      });
+
+      if (maxMismatch < tol) { converged = true; break; }
+
+      // Simplified update (forward/backward substitute approx)
+      for (let i = 0; i < n; i++) {
+        if (buses[i].type === 'slack') continue;
+        const Bii = Y[i][i].im || -1;
+        theta[i] += dP[i] / (-Bii * V[i] * V[i] + 0.001);
+        if (buses[i].type === 'pq') {
+          V[i] = Math.max(0.8, Math.min(1.2, V[i] + dQ[i] / (-Bii * V[i] + 0.001)));
+        }
+      }
+    }
+
+    // Compute line flows
+    const lineFlows = lines.map(line => {
+      const i = buses.findIndex(b => b.id === line.from);
+      const j = buses.findIndex(b => b.id === line.to);
+      if (i < 0 || j < 0) return {...line, P: 0, Q: 0, loading: 0};
+      const tij = theta[i] - theta[j];
+      const z = {re: line.r, im: line.x};
+      const zmag2 = z.re*z.re + z.im*z.im;
+      const G = z.re/zmag2, B = -z.im/zmag2;
+      const Pij = V[i]*V[i]*G - V[i]*V[j]*(G*Math.cos(tij) + B*Math.sin(tij));
+      const Qij = -V[i]*V[i]*B - V[i]*V[j]*(G*Math.sin(tij) - B*Math.cos(tij));
+      const Sij = Math.sqrt(Pij*Pij + Qij*Qij);
+      const loading = Math.min(150, (Sij / (line.rating || 1)) * 100);
+      return {...line, P: Pij, Q: Qij, S: Sij, loading};
+    });
+
+    // Compute losses
+    const totalLoss = lineFlows.reduce((acc, l) => acc + Math.abs(l.P || 0) * l.r * 0.1, 0);
+
+    // Slack bus injection
+    const slackIdx = buses.findIndex(b => b.type === 'slack');
+    if (slackIdx >= 0) {
+      let Ps = 0, Qs = 0;
+      for (let j = 0; j < n; j++) {
+        const tij = theta[slackIdx] - theta[j];
+        const G = Y[slackIdx][j].re, B = Y[slackIdx][j].im;
+        Ps += V[slackIdx] * V[j] * (G * Math.cos(tij) + B * Math.sin(tij));
+        Qs += V[slackIdx] * V[j] * (G * Math.sin(tij) - B * Math.cos(tij));
+      }
+    }
+
+    return {
+      converged,
+      iterations: iter,
+      voltages: V,
+      angles: theta.map(t => t * 180 / Math.PI),
+      lineFlows,
+      totalLoss,
+      steps,
+      Ybus: Y
+    };
+  },
+
+  faultAnalysis(buses, lines, faultBusId, faultType = '3phase') {
+    const n = buses.length;
+    const Y = this.buildYBus(buses, lines);
+    const faultIdx = buses.findIndex(b => b.id === faultBusId);
+    if (faultIdx < 0) return null;
+
+    // Simplified Z-bus method
+    const Zf = faultType === '3phase' ? 0 : 0.05;
+    const V_prefault = buses.map(b => b.v || 1.0);
+
+    const Yfault_diag = Y[faultIdx][faultIdx];
+    const Zbus_ff = {
+      re: Yfault_diag.re / (Yfault_diag.re*Yfault_diag.re + Yfault_diag.im*Yfault_diag.im),
+      im: -Yfault_diag.im / (Yfault_diag.re*Yfault_diag.re + Yfault_diag.im*Yfault_diag.im)
+    };
+
+    const If_mag = V_prefault[faultIdx] / Math.sqrt((Zbus_ff.re + Zf)*(Zbus_ff.re + Zf) + Zbus_ff.im*Zbus_ff.im);
+    const If_pu = If_mag;
+
+    // Voltage depression
+    const voltagesDuring = V_prefault.map((v, i) => {
+      if (i === faultIdx) return faultType === '3phase' ? 0 : 0.3;
+      const dist = Math.abs(i - faultIdx) + 1;
+      return Math.max(0.3, v - (If_pu * 0.15) / dist);
+    });
+
+    return {
+      faultBus: faultBusId,
+      faultType,
+      faultCurrentPU: If_pu,
+      faultCurrentKA: If_pu * 1.5,
+      voltagesDuring,
+      clearingTime: 0.08 + Math.random() * 0.02,
+      severity: If_pu > 3 ? 'critical' : If_pu > 2 ? 'high' : 'moderate'
+    };
+  },
+
+  stabilityAnalysis(buses, lines, duration = 5, dt = 0.01) {
+    const time = [];
+    const rotorAngles = [];
+    const frequencies = [];
+    const genBuses = buses.filter(b => b.type !== 'pq' && (b.pg || 0) > 0);
+
+    const H = 5; // inertia constant
+    const D = 1; // damping
+
+    let delta = (45 + Math.random() * 10) * Math.PI / 180;
+    let omega = 0;
+    let freq = 60;
+
+    const Pm = genBuses.reduce((s, b) => s + (b.pg || 0), 0) || 1;
+
+    for (let t = 0; t <= duration; t += dt) {
+      time.push(+t.toFixed(3));
+
+      // Swing equation simplified
+      const Pe = Pm * Math.sin(delta) * (0.9 + 0.1 * Math.cos(t * 2));
+      const acc = (Math.PI * freq / H) * (Pm - Pe - D * omega);
+      omega += acc * dt;
+      delta += omega * dt;
+
+      // Frequency
+      const df = (Pm - Pe) / (2 * H / (2 * Math.PI * 60)) * dt * 0.1;
+      freq = 60 + (delta - 45 * Math.PI / 180) * (-0.5);
+      freq = Math.max(59, Math.min(61, freq));
+
+      rotorAngles.push(+(delta * 180 / Math.PI).toFixed(3));
+      frequencies.push(+freq.toFixed(4));
+    }
+
+    return { time, rotorAngles, frequencies, stable: Math.abs(rotorAngles[rotorAngles.length - 1]) < 180 };
+  },
+
+  economicDispatch(buses, totalLoad) {
+    const gens = buses.filter(b => b.type !== 'pq' && b.pg !== undefined);
+    if (gens.length === 0) return [];
+
+    // Lambda iteration
+    const costs = gens.map((g, i) => ({
+      id: g.id,
+      name: g.name,
+      Pmin: g.pmin || 0.1,
+      Pmax: g.pmax || (g.pg || 1) * 1.5,
+      a: 0.01 + i * 0.005,
+      b: 2.0 + i * 0.5,
+      c: 10 + i * 5
+    }));
+
+    let lambda = 2.5;
+    const result = costs.map(g => {
+      const P = Math.max(g.Pmin, Math.min(g.Pmax, (lambda - g.b) / (2 * g.a)));
+      return {...g, P, cost: g.a*P*P + g.b*P + g.c};
+    });
+
+    return result;
+  }
+};
+
+// ==========================================
+// DEFAULT SYSTEM (IEEE 5-BUS)
+// ==========================================
+const defaultBuses = [
+  { id: 'B1', name: 'Bus-1 (Slack)', type: 'slack', v: 1.06, angle: 0, pg: 0, pl: 0, qg: 0, ql: 0, x: 200, y: 150, pmax: 3, pmin: 0 },
+  { id: 'B2', name: 'Bus-2 (Gen)', type: 'pv', v: 1.045, angle: 0, pg: 0.4, pl: 0.2, qg: 0, ql: 0.1, x: 420, y: 100, pmax: 1.0, pmin: 0.1 },
+  { id: 'B3', name: 'Bus-3 (Load)', type: 'pq', v: 1.0, angle: 0, pg: 0, pl: 0.45, qg: 0, ql: 0.15, x: 550, y: 250, pmax: 0, pmin: 0 },
+  { id: 'B4', name: 'Bus-4 (Load)', type: 'pq', v: 1.0, angle: 0, pg: 0, pl: 0.4, qg: 0, ql: 0.05, x: 350, y: 330, pmax: 0, pmin: 0 },
+  { id: 'B5', name: 'Bus-5 (Gen)', type: 'pv', v: 1.01, angle: 0, pg: 0.3, pl: 0.0, qg: 0, ql: 0, x: 160, y: 300, pmax: 0.8, pmin: 0.1 },
+];
+
+const defaultLines = [
+  { id: 'L12', from: 'B1', to: 'B2', r: 0.02, x: 0.06, b: 0.06, rating: 1.0, active: true },
+  { id: 'L13', from: 'B1', to: 'B3', r: 0.08, x: 0.24, b: 0.05, rating: 0.8, active: true },
+  { id: 'L24', from: 'B2', to: 'B4', r: 0.06, x: 0.18, b: 0.04, rating: 0.7, active: true },
+  { id: 'L34', from: 'B3', to: 'B4', r: 0.06, x: 0.18, b: 0.04, rating: 0.6, active: true },
+  { id: 'L45', from: 'B4', to: 'B5', r: 0.04, x: 0.12, b: 0.03, rating: 0.5, active: true },
+  { id: 'L25', from: 'B2', to: 'B5', r: 0.10, x: 0.30, b: 0.02, rating: 0.4, active: true },
+];
+
+// ==========================================
+// CHART HELPERS
+// ==========================================
+function useChart(canvasRef, config) {
+  const chartRef = useRef(null);
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    if (chartRef.current) chartRef.current.destroy();
+    chartRef.current = new Chart(canvasRef.current, config);
+    return () => { if (chartRef.current) chartRef.current.destroy(); };
+  }, [JSON.stringify(config)]);
+}
+
+// ==========================================
+// NOTIFICATION SYSTEM
+// ==========================================
+function Notification({ msg, type, onDone }) {
+  useEffect(() => {
+    const t = setTimeout(onDone, 3000);
+    return () => clearTimeout(t);
+  }, []);
+
+  const colors = { success: '#00ff88', info: '#00d4ff', warn: '#ffcc00', error: '#ff3355' };
+  return (
+    <div className="notif" style={{ borderLeftColor: colors[type] || colors.info }}>
+      {msg}
+    </div>
+  );
+}
+
+// ==========================================
+// 2D GRID CANVAS
+// ==========================================
+function GridCanvas({ buses, lines, results, faultResult, selectedId, onSelect, onBusMove, mode, timeStep, disturbance }) {
+  const canvasRef = useRef(null);
+  const animRef = useRef(null);
+  const particlesRef = useRef([]);
+  const [dragging, setDragging] = useState(null);
+  const [offset, setOffset] = useState({x:0, y:0});
+  const [scale, setScale] = useState(1);
+  const [pan, setPan] = useState({x:0, y:0});
+
+  const voltages = results?.voltages || buses.map(() => 1.0);
+  const angles = results?.angles || buses.map(() => 0);
+  const lineFlows = results?.lineFlows || lines;
+
+  const getBusColor = (bus, idx) => {
+    const v = voltages[idx] || 1.0;
+    if (faultResult && faultResult.faultBus === bus.id) return '#ff3355';
+    if (v < 0.9 || v > 1.1) return '#ff6600';
+    if (v < 0.95 || v > 1.05) return '#ffcc00';
+    return '#00ff88';
+  };
+
+  const getLineColor = (flow) => {
+    if (!flow.active) return '#334466';
+    const l = flow.loading || 0;
+    if (l > 100) return '#ff3355';
+    if (l > 80) return '#ff6600';
+    if (l > 60) return '#ffcc00';
+    return '#00ff88';
+  };
+
+  // Init particles
+  useEffect(() => {
+    const particles = [];
+    lines.forEach((line, li) => {
+      if (!line.active) return;
+      for (let i = 0; i < 3; i++) {
+        particles.push({ lineId: line.id, t: Math.random(), speed: 0.003 + Math.random() * 0.004 });
+      }
+    });
+    particlesRef.current = particles;
+  }, [lines.length]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let frame;
+
+    const busMap = {};
+    buses.forEach(b => busMap[b.id] = b);
+
+    const draw = () => {
+      const W = canvas.width, H = canvas.height;
+      ctx.clearRect(0, 0, W, H);
+
+      // Background grid
+      ctx.save();
+      ctx.strokeStyle = 'rgba(15,42,69,0.5)';
+      ctx.lineWidth = 1;
+      const gridSize = 40 * scale;
+      const ox = pan.x % gridSize, oy = pan.y % gridSize;
+      for (let x = ox; x < W; x += gridSize) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+      for (let y = oy; y < H; y += gridSize) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+      ctx.restore();
+
+      ctx.save();
+      ctx.translate(pan.x, pan.y);
+      ctx.scale(scale, scale);
+
+      // Draw lines
+      lineFlows.forEach(flow => {
+        const fromBus = busMap[flow.from];
+        const toBus = busMap[flow.to];
+        if (!fromBus || !toBus) return;
+
+        const color = getLineColor(flow);
+        const lw = Math.max(1, Math.min(5, (flow.loading || 30) / 25));
+
+        ctx.beginPath();
+        ctx.moveTo(fromBus.x, fromBus.y);
+        ctx.lineTo(toBus.x, toBus.y);
+        ctx.strokeStyle = flow.active !== false ? color + '66' : '#223344';
+        ctx.lineWidth = lw + 2;
+        ctx.stroke();
+
+        if (flow.active !== false && results) {
+          ctx.beginPath();
+          ctx.setLineDash([8, 4]);
+          ctx.moveTo(fromBus.x, fromBus.y);
+          ctx.lineTo(toBus.x, toBus.y);
+          ctx.strokeStyle = color;
+          ctx.lineWidth = lw;
+          ctx.lineDashOffset = -(Date.now() / 20 % 60);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        // Loading label
+        if (results) {
+          const mx = (fromBus.x + toBus.x) / 2;
+          const my = (fromBus.y + toBus.y) / 2;
+          ctx.fillStyle = color;
+          ctx.font = '10px Share Tech Mono';
+          ctx.textAlign = 'center';
+          ctx.fillText(`${(flow.loading || 0).toFixed(0)}%`, mx, my - 6);
+          ctx.fillText(`${(flow.P || 0).toFixed(2)}pu`, mx, my + 8);
+        }
+
+        // Breaker symbol if tripped
+        if (flow.active === false) {
+          const mx = (fromBus.x + toBus.x) / 2;
+          const my = (fromBus.y + toBus.y) / 2;
+          ctx.fillStyle = '#ff3355';
+          ctx.font = '12px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('✕', mx, my + 4);
+        }
+      });
+
+      // Particles on lines
+      particlesRef.current.forEach(p => {
+        const line = lineFlows.find(l => l.id === p.lineId);
+        if (!line || !line.active) return;
+        const from = busMap[line.from], to = busMap[line.to];
+        if (!from || !to) return;
+
+        const speed = (line.loading || 30) / 5000;
+        p.t = (p.t + speed) % 1;
+        const px = from.x + (to.x - from.x) * p.t;
+        const py = from.y + (to.y - from.y) * p.t;
+
+        ctx.beginPath();
+        ctx.arc(px, py, 3, 0, Math.PI * 2);
+        ctx.fillStyle = getLineColor(line);
+        ctx.shadowColor = getLineColor(line);
+        ctx.shadowBlur = 8;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      });
+
+      // Draw buses
+      buses.forEach((bus, idx) => {
+        const color = getBusColor(bus, idx);
+        const isSelected = bus.id === selectedId;
+        const isFault = faultResult && faultResult.faultBus === bus.id;
+        const r = isSelected ? 22 : 18;
+
+        // Outer glow
+        const gradient = ctx.createRadialGradient(bus.x, bus.y, 0, bus.x, bus.y, r * 2);
+        gradient.addColorStop(0, color + '44');
+        gradient.addColorStop(1, 'transparent');
+        ctx.beginPath();
+        ctx.arc(bus.x, bus.y, r * 2, 0, Math.PI * 2);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+
+        // Ring
+        ctx.beginPath();
+        ctx.arc(bus.x, bus.y, r, 0, Math.PI * 2);
+        ctx.strokeStyle = isSelected ? '#ffffff' : color;
+        ctx.lineWidth = isSelected ? 3 : 2;
+        if (isFault) {
+          ctx.strokeStyle = '#ff3355';
+          const t = Date.now() / 200;
+          ctx.lineWidth = 2 + Math.sin(t) * 2;
+        }
+        ctx.stroke();
+
+        // Inner fill
+        ctx.beginPath();
+        ctx.arc(bus.x, bus.y, r - 2, 0, Math.PI * 2);
+        ctx.fillStyle = '#060d14';
+        ctx.fill();
+
+        // Center dot
+        ctx.beginPath();
+        ctx.arc(bus.x, bus.y, 4, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 10;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Generator symbol
+        if (bus.type !== 'pq' && bus.pg > 0) {
+          ctx.strokeStyle = color + 'aa';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(bus.x, bus.y, 8, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.fillStyle = color;
+          ctx.font = '8px Rajdhani';
+          ctx.textAlign = 'center';
+          ctx.fillText('G', bus.x, bus.y + 3);
+        }
+
+        // Load symbol
+        if (bus.pl > 0) {
+          ctx.fillStyle = '#6a90b0';
+          ctx.fillText('▼', bus.x + (bus.type !== 'pq' ? 12 : 0), bus.y - 10);
+        }
+
+        // Bus name label
+        ctx.fillStyle = '#e0f0ff';
+        ctx.font = 'bold 11px Rajdhani';
+        ctx.textAlign = 'center';
+        ctx.fillText(bus.name.split(' ')[0], bus.x, bus.y + r + 14);
+
+        // Voltage label
+        if (results) {
+          const v = (voltages[idx] || 1.0).toFixed(4);
+          const a = (angles[idx] || 0).toFixed(2);
+          ctx.fillStyle = color;
+          ctx.font = '9px Share Tech Mono';
+          ctx.fillText(`${v}∠${a}°`, bus.x, bus.y + r + 25);
+        }
+
+        // Fault spark effect
+        if (isFault) {
+          const t = Date.now() / 100;
+          for (let i = 0; i < 6; i++) {
+            const angle = (i / 6) * Math.PI * 2 + t;
+            const dist = 25 + Math.sin(t * 3 + i) * 8;
+            ctx.beginPath();
+            ctx.moveTo(bus.x, bus.y);
+            ctx.lineTo(bus.x + Math.cos(angle) * dist, bus.y + Math.sin(angle) * dist);
+            ctx.strokeStyle = `rgba(255, ${50 + i * 30}, 0, 0.6)`;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
+        }
+      });
+
+      ctx.restore();
+      frame = requestAnimationFrame(draw);
+    };
+
+    draw();
+    return () => cancelAnimationFrame(frame);
+  }, [buses, lineFlows, voltages, angles, selectedId, faultResult, results, pan, scale, mode]);
+
+  const getCanvasPos = (e) => {
+    const rect = canvasRef.current.getBoundingClientRect();
+    return {
+      x: (e.clientX - rect.left - pan.x) / scale,
+      y: (e.clientY - rect.top - pan.y) / scale
+    };
+  };
+
+  const handleMouseDown = (e) => {
+    const pos = getCanvasPos(e);
+    const hit = buses.find(b => Math.hypot(b.x - pos.x, b.y - pos.y) < 24);
+    if (hit) {
+      setDragging(hit.id);
+      setOffset({x: pos.x - hit.x, y: pos.y - hit.y});
+      onSelect(hit.id);
+    } else {
+      onSelect(null);
+    }
+  };
+
+  const handleMouseMove = (e) => {
+    if (!dragging) return;
+    const pos = getCanvasPos(e);
+    const snapped = { x: Math.round((pos.x - offset.x) / 20) * 20, y: Math.round((pos.y - offset.y) / 20) * 20 };
+    onBusMove(dragging, snapped);
+  };
+
+  const handleWheel = (e) => {
+    e.preventDefault();
+    const factor = e.deltaY > 0 ? 0.9 : 1.1;
+    setScale(s => Math.max(0.3, Math.min(3, s * factor)));
+  };
+
+  const resizeCanvas = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+  }, []);
+
+  useEffect(() => {
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    return () => window.removeEventListener('resize', resizeCanvas);
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="grid-canvas"
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={() => setDragging(null)}
+      onWheel={handleWheel}
+      style={{ cursor: dragging ? 'grabbing' : 'grab' }}
+    />
+  );
+}
+
+// ==========================================
+// THREE.JS 3D VIEW
+// ==========================================
+function ThreeView({ buses, lines, results, faultResult, active }) {
+  const mountRef = useRef(null);
+  const sceneRef = useRef({});
+
+  useEffect(() => {
+    if (!active || !mountRef.current) return;
+    const THREE_LIB = window.THREE;
+    if (!THREE_LIB) return;
+
+    const W = mountRef.current.clientWidth;
+    const H = mountRef.current.clientHeight;
+
+    // Scene setup
+    const scene = new THREE_LIB.Scene();
+    scene.background = new THREE_LIB.Color(0x010810);
+    scene.fog = new THREE_LIB.FogExp2(0x010810, 0.025);
+
+    const camera = new THREE_LIB.PerspectiveCamera(60, W/H, 0.1, 1000);
+    camera.position.set(0, 8, 18);
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE_LIB.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(W, H);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.shadowMap.enabled = true;
+    mountRef.current.appendChild(renderer.domElement);
+
+    // Lighting
+    const ambientLight = new THREE_LIB.AmbientLight(0x112233, 0.8);
+    scene.add(ambientLight);
+    const dirLight = new THREE_LIB.DirectionalLight(0x4488ff, 1.5);
+    dirLight.position.set(10, 20, 10);
+    dirLight.castShadow = true;
+    scene.add(dirLight);
+
+    // Grid floor
+    const gridHelper = new THREE_LIB.GridHelper(40, 40, 0x0a2040, 0x061020);
+    scene.add(gridHelper);
+
+    // Background particles
+    const starGeo = new THREE_LIB.BufferGeometry();
+    const starPositions = [];
+    for (let i = 0; i < 500; i++) {
+      starPositions.push((Math.random() - 0.5) * 100, (Math.random() - 0.5) * 50, (Math.random() - 0.5) * 100);
+    }
+    starGeo.setAttribute('position', new THREE_LIB.Float32BufferAttribute(starPositions, 3));
+    const starMat = new THREE_LIB.PointsMaterial({ color: 0x334466, size: 0.1 });
+    scene.add(new THREE_LIB.Points(starGeo, starMat));
+
+    // Map buses to 3D positions
+    const voltages = results?.voltages || buses.map(() => 1.0);
+    const centerX = buses.reduce((s, b) => s + b.x, 0) / buses.length;
+    const centerY = buses.reduce((s, b) => s + b.y, 0) / buses.length;
+
+    const busObjects = {};
+    const busPos = {};
+
+    buses.forEach((bus, idx) => {
+      const v = voltages[idx] || 1.0;
+      const isFault = faultResult && faultResult.faultBus === bus.id;
+      const isLow = v < 0.95, isHigh = v > 1.05;
+
+      const color = isFault ? 0xff3355 : (isLow || isHigh) ? 0xffcc00 : 0x00ff88;
+      const x = (bus.x - centerX) / 40;
+      const z = (bus.y - centerY) / 40;
+      const y = (v - 1.0) * 3;
+
+      busPos[bus.id] = { x, y, z };
+
+      // Sphere for bus
+      const geo = new THREE_LIB.SphereGeometry(0.4, 16, 16);
+      const mat = new THREE_LIB.MeshStandardMaterial({
+        color,
+        emissive: color,
+        emissiveIntensity: 0.5 + (v - 1.0) * 2,
+        metalness: 0.3,
+        roughness: 0.4
+      });
+      const mesh = new THREE_LIB.Mesh(geo, mat);
+      mesh.position.set(x, y, z);
+      mesh.castShadow = true;
+      mesh.userData = { busId: bus.id, type: 'bus' };
+      scene.add(mesh);
+      busObjects[bus.id] = mesh;
+
+      // Vertical pillar
+      const pillarGeo = new THREE_LIB.CylinderGeometry(0.05, 0.05, Math.abs(y) + 0.01, 6);
+      const pillarMat = new THREE_LIB.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.2 });
+      const pillar = new THREE_LIB.Mesh(pillarGeo, pillarMat);
+      pillar.position.set(x, y / 2, z);
+      scene.add(pillar);
+
+      // Generator cylinder
+      if (bus.type !== 'pq' && bus.pg > 0) {
+        const genGeo = new THREE_LIB.CylinderGeometry(0.25, 0.25, 0.6, 16);
+        const genMat = new THREE_LIB.MeshStandardMaterial({ color: 0x0080ff, emissive: 0x0040ff, emissiveIntensity: 0.4 });
+        const gen = new THREE_LIB.Mesh(genGeo, genMat);
+        gen.position.set(x, y + 0.7, z);
+        scene.add(gen);
+      }
+
+      // Point light at each bus
+      const pl = new THREE_LIB.PointLight(color, 0.5, 3);
+      pl.position.set(x, y + 0.5, z);
+      scene.add(pl);
+    });
+
+    // Draw lines as tubes
+    const lineParticles = [];
+    lines.forEach(line => {
+      if (!line.active) return;
+      const fromPos = busPos[line.from];
+      const toPos = busPos[line.to];
+      if (!fromPos || !toPos) return;
+
+      const flow = results?.lineFlows?.find(f => f.id === line.id);
+      const loading = flow?.loading || 30;
+      const color = loading > 100 ? 0xff3355 : loading > 80 ? 0xff6600 : loading > 60 ? 0xffcc00 : 0x00d4ff;
+
+      const from = new THREE_LIB.Vector3(fromPos.x, fromPos.y, fromPos.z);
+      const to = new THREE_LIB.Vector3(toPos.x, toPos.y, toPos.z);
+      const dir = to.clone().sub(from);
+      const len = dir.length();
+      const mid = from.clone().add(to).multiplyScalar(0.5);
+
+      const tubeMat = new THREE_LIB.MeshStandardMaterial({
+        color, emissive: color, emissiveIntensity: 0.3,
+        transparent: true, opacity: 0.7
+      });
+
+      const path = new THREE_LIB.LineCurve3(from, to);
+      const tubeGeo = new THREE_LIB.TubeGeometry(path, 8, 0.05, 6, false);
+      const tube = new THREE_LIB.Mesh(tubeGeo, tubeMat);
+      scene.add(tube);
+
+      // Particles on line
+      for (let i = 0; i < 4; i++) {
+        const pGeo = new THREE_LIB.SphereGeometry(0.08, 6, 6);
+        const pMat = new THREE_LIB.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 1 });
+        const p = new THREE_LIB.Mesh(pGeo, pMat);
+        p.userData = { from: from.clone(), to: to.clone(), t: i / 4, speed: (loading / 5000) + 0.002 };
+        scene.add(p);
+        lineParticles.push(p);
+      }
+    });
+
+    // Mouse controls (orbit)
+    let isPointerDown = false, lastX = 0, lastY = 0;
+    let rotX = 0.3, rotY = 0;
+    const domEl = renderer.domElement;
+
+    const onDown = e => { isPointerDown = true; lastX = e.clientX; lastY = e.clientY; };
+    const onUp = () => { isPointerDown = false; };
+    const onMove = e => {
+      if (!isPointerDown) return;
+      rotY += (e.clientX - lastX) * 0.005;
+      rotX = Math.max(-0.5, Math.min(1.2, rotX + (e.clientY - lastY) * 0.005));
+      lastX = e.clientX; lastY = e.clientY;
+    };
+    const onWheel = e => { camera.position.multiplyScalar(e.deltaY > 0 ? 1.1 : 0.9); };
+
+    domEl.addEventListener('pointerdown', onDown);
+    domEl.addEventListener('pointerup', onUp);
+    domEl.addEventListener('pointermove', onMove);
+    domEl.addEventListener('wheel', onWheel);
+
+    let animId;
+    const animate = () => {
+      animId = requestAnimationFrame(animate);
+      const t = Date.now() * 0.001;
+
+      // Orbit camera
+      const R = camera.position.length();
+      camera.position.x = Math.sin(rotY) * Math.cos(rotX) * R;
+      camera.position.y = Math.sin(rotX) * R;
+      camera.position.z = Math.cos(rotY) * Math.cos(rotX) * R;
+      camera.lookAt(0, 0, 0);
+
+      // Animate bus spheres
+      Object.entries(busObjects).forEach(([id, mesh]) => {
+        mesh.rotation.y += 0.01;
+        mesh.position.y = busPos[id].y + Math.sin(t * 2 + parseInt(id.replace('B','')) * 0.5) * 0.05;
+        if (faultResult && faultResult.faultBus === id) {
+          mesh.material.emissiveIntensity = 0.5 + Math.sin(t * 10) * 0.5;
+        }
+      });
+
+      // Animate particles along lines
+      lineParticles.forEach(p => {
+        p.userData.t = (p.userData.t + p.userData.speed) % 1;
+        p.position.lerpVectors(p.userData.from, p.userData.to, p.userData.t);
+        p.position.y += Math.sin(t * 5 + p.userData.t * 10) * 0.02;
+      });
+
+      renderer.render(scene, camera);
+    };
+
+    animate();
+    sceneRef.current = { renderer, scene, camera, animId };
+
+    return () => {
+      cancelAnimationFrame(animId);
+      renderer.dispose();
+      domEl.removeEventListener('pointerdown', onDown);
+      domEl.removeEventListener('pointerup', onUp);
+      domEl.removeEventListener('pointermove', onMove);
+      domEl.removeEventListener('wheel', onWheel);
+      if (mountRef.current && domEl.parentNode === mountRef.current) {
+        mountRef.current.removeChild(domEl);
+      }
+    };
+  }, [active, buses.length, lines.length, JSON.stringify(results?.voltages), faultResult?.faultBus]);
+
+  return <div ref={mountRef} style={{ width: '100%', height: '100%', position: 'absolute', inset: 0 }} />;
+}
+
+// ==========================================
+// LOAD FLOW RESULTS TAB
+// ==========================================
+function LoadFlowTab({ results, buses }) {
+  const chartRef = useRef(null);
+  const angleRef = useRef(null);
+
+  useChart(chartRef, {
+    type: 'bar',
+    data: {
+      labels: buses.map(b => b.name.split(' ')[0]),
+      datasets: [{
+        label: 'Voltage (pu)',
+        data: results?.voltages || buses.map(() => 1.0),
+        backgroundColor: (results?.voltages || []).map(v =>
+          v < 0.9 ? 'rgba(255,51,85,0.6)' : v < 0.95 ? 'rgba(255,204,0,0.6)' : 'rgba(0,255,136,0.6)'
+        ),
+        borderColor: (results?.voltages || []).map(v =>
+          v < 0.9 ? '#ff3355' : v < 0.95 ? '#ffcc00' : '#00ff88'
+        ),
+        borderWidth: 1,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#6a90b0', font: { size: 9 } } } },
+      scales: {
+        x: { ticks: { color: '#6a90b0', font: { size: 9 } }, grid: { color: '#0f2a45' } },
+        y: { min: 0.85, max: 1.15, ticks: { color: '#6a90b0', font: { size: 9 } }, grid: { color: '#0f2a45' } }
+      }
+    }
+  });
+
+  return (
+    <div style={{ padding: '8px' }}>
+      <div className="mini-chart" style={{ height: '120px', marginBottom: '8px' }}>
+        <canvas ref={chartRef} />
+      </div>
+      {results ? (
+        <table className="result-table">
+          <thead>
+            <tr>
+              <th>Bus</th><th>V (pu)</th><th>θ (°)</th><th>P (pu)</th><th>Q (pu)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {buses.map((bus, i) => {
+              const v = results.voltages[i] || 1.0;
+              const cls = v < 0.9 ? 'val-critical' : v < 0.95 ? 'val-warning' : 'val-normal';
+              return (
+                <tr key={bus.id}>
+                  <td>{bus.name.split(' ')[0]}</td>
+                  <td className={cls}>{v.toFixed(4)}</td>
+                  <td style={{color:'#6a90b0'}}>{(results.angles[i]||0).toFixed(3)}</td>
+                  <td style={{color:'#00d4ff'}}>{(bus.pg - bus.pl).toFixed(3)}</td>
+                  <td style={{color:'#8855ff'}}>{(bus.qg - bus.ql).toFixed(3)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      ) : (
+        <div style={{ color: 'var(--text-dim)', textAlign: 'center', padding: '20px', fontFamily: 'Share Tech Mono', fontSize: '11px' }}>
+          ▶ Run Load Flow to see results
+        </div>
+      )}
+      {results && (
+        <div style={{ marginTop: '8px', padding: '6px 8px', border: '1px solid var(--border)', background: 'var(--bg-card)' }}>
+          <div className="metric-label">Converged in {results.iterations} iterations</div>
+          <div className="metric-label" style={{marginTop:'4px'}}>Total losses: <span style={{color:'#ffcc00'}}>{(results.totalLoss || 0).toFixed(4)} pu</span></div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ==========================================
+// FAULT ANALYSIS TAB
+// ==========================================
+function FaultTab({ faultResult, buses }) {
+  if (!faultResult) return (
+    <div style={{ color: 'var(--text-dim)', textAlign: 'center', padding: '20px', fontFamily: 'Share Tech Mono', fontSize: '11px' }}>
+      ▶ Select a bus & run Fault Analysis
+    </div>
+  );
+
+  return (
+    <div style={{ padding: '8px' }}>
+      <div className="metric-card" style={{ borderLeft: '3px solid var(--accent-red)' }}>
+        <div className="metric-label">Fault Location</div>
+        <div style={{ color: 'var(--accent-red)', fontWeight: 700, fontSize: '14px' }}>{faultResult.faultBus} — {faultResult.faultType.toUpperCase()}</div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', margin: '4px 0' }}>
+        <div className="metric-card">
+          <div className="metric-label">Fault Current</div>
+          <div className="metric-value red">{faultResult.faultCurrentPU.toFixed(3)}</div>
+          <div style={{ color: 'var(--text-dim)', fontSize: '9px' }}>pu</div>
+        </div>
+        <div className="metric-card">
+          <div className="metric-label">Fault Current</div>
+          <div className="metric-value red">{faultResult.faultCurrentKA.toFixed(3)}</div>
+          <div style={{ color: 'var(--text-dim)', fontSize: '9px' }}>kA</div>
+        </div>
+      </div>
+      <div className="metric-card">
+        <div className="metric-label">Clearing Time</div>
+        <div style={{ color: 'var(--accent-yellow)', fontFamily: 'Orbitron', fontSize: '16px' }}>
+          {faultResult.clearingTime.toFixed(3)} s
+        </div>
+      </div>
+      <div style={{ marginTop: '8px' }}>
+        <div className="section-label">Voltage Profile During Fault</div>
+        {buses.map((bus, i) => {
+          const v = faultResult.voltagesDuring[i] || 0;
+          const pct = Math.max(0, Math.min(100, v * 100));
+          const color = v < 0.5 ? '#ff3355' : v < 0.9 ? '#ffcc00' : '#00ff88';
+          return (
+            <div key={bus.id} style={{ marginBottom: '4px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--text-secondary)' }}>
+                <span>{bus.name.split(' ')[0]}</span>
+                <span style={{ color, fontFamily: 'Share Tech Mono' }}>{v.toFixed(3)} pu</span>
+              </div>
+              <div className="volt-bar">
+                <div className="volt-fill" style={{ width: `${pct}%`, background: color }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="insight-card error" style={{ marginTop: '8px' }}>
+        <div className="insight-title">⚠ Fault Analysis Complete</div>
+        <div className="insight-body">
+          Severity: <b>{faultResult.severity.toUpperCase()}</b>. Fault current {faultResult.faultCurrentPU.toFixed(2)}pu exceeds nominal.
+          Initiate protection relay sequence. Clear within {faultResult.clearingTime.toFixed(3)}s to prevent cascade.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// STABILITY TAB
+// ==========================================
+function StabilityTab({ stabilityResult }) {
+  const rotorRef = useRef(null);
+  const freqRef = useRef(null);
+
+  const rotorConfig = useMemo(() => {
+    if (!stabilityResult) return null;
+    const step = Math.max(1, Math.floor(stabilityResult.time.length / 50));
+    return {
+      type: 'line',
+      data: {
+        labels: stabilityResult.time.filter((_,i) => i%step===0),
+        datasets: [{
+          label: 'Rotor Angle (°)',
+          data: stabilityResult.rotorAngles.filter((_,i) => i%step===0),
+          borderColor: '#00d4ff',
+          backgroundColor: 'rgba(0,212,255,0.05)',
+          borderWidth: 1.5,
+          pointRadius: 0,
+          tension: 0.4
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: '#6a90b0', font: { size: 9 } } } },
+        scales: {
+          x: { ticks: { color: '#6a90b0', font: { size: 8 }, maxTicksLimit: 6 }, grid: { color: '#0f2a45' } },
+          y: { ticks: { color: '#6a90b0', font: { size: 8 } }, grid: { color: '#0f2a45' } }
+        }
+      }
+    };
+  }, [stabilityResult]);
+
+  const freqConfig = useMemo(() => {
+    if (!stabilityResult) return null;
+    const step = Math.max(1, Math.floor(stabilityResult.time.length / 50));
+    return {
+      type: 'line',
+      data: {
+        labels: stabilityResult.time.filter((_,i) => i%step===0),
+        datasets: [{
+          label: 'Frequency (Hz)',
+          data: stabilityResult.frequencies.filter((_,i) => i%step===0),
+          borderColor: '#00ff88',
+          backgroundColor: 'rgba(0,255,136,0.05)',
+          borderWidth: 1.5,
+          pointRadius: 0,
+          tension: 0.4
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: '#6a90b0', font: { size: 9 } } } },
+        scales: {
+          x: { ticks: { color: '#6a90b0', font: { size: 8 }, maxTicksLimit: 6 }, grid: { color: '#0f2a45' } },
+          y: { min: 59, max: 61, ticks: { color: '#6a90b0', font: { size: 8 } }, grid: { color: '#0f2a45' } }
+        }
+      }
+    };
+  }, [stabilityResult]);
+
+  useChart(rotorRef, rotorConfig || { type: 'line', data: { labels: [], datasets: [] }, options: {} });
+  useChart(freqRef, freqConfig || { type: 'line', data: { labels: [], datasets: [] }, options: {} });
+
+  if (!stabilityResult) return (
+    <div style={{ color: 'var(--text-dim)', textAlign: 'center', padding: '20px', fontFamily: 'Share Tech Mono', fontSize: '11px' }}>
+      ▶ Run Stability Analysis
+    </div>
+  );
+
+  return (
+    <div style={{ padding: '8px' }}>
+      <div className={`insight-card ${stabilityResult.stable ? 'success' : 'error'}`} style={{ marginBottom: '8px' }}>
+        <div className="insight-title">{stabilityResult.stable ? '✓ System Stable' : '✗ System Unstable'}</div>
+        <div className="insight-body">
+          Final rotor angle: <b>{stabilityResult.rotorAngles[stabilityResult.rotorAngles.length-1]?.toFixed(1)}°</b>
+        </div>
+      </div>
+      <div style={{ marginBottom: '4px', fontSize: '10px', color: 'var(--text-secondary)' }}>Rotor Angle</div>
+      <div style={{ height: '100px', marginBottom: '8px' }}><canvas ref={rotorRef} /></div>
+      <div style={{ marginBottom: '4px', fontSize: '10px', color: 'var(--text-secondary)' }}>Frequency</div>
+      <div style={{ height: '100px' }}><canvas ref={freqRef} /></div>
+    </div>
+  );
+}
+
+// ==========================================
+// ANALYTICS TAB
+// ==========================================
+function AnalyticsTab({ results, buses, lines }) {
+  const lossRef = useRef(null);
+
+  const lossConfig = useMemo(() => {
+    if (!results?.lineFlows) return null;
+    return {
+      type: 'bar',
+      data: {
+        labels: results.lineFlows.map(l => l.id),
+        datasets: [{
+          label: 'Loading %',
+          data: results.lineFlows.map(l => l.loading || 0),
+          backgroundColor: results.lineFlows.map(l =>
+            (l.loading||0) > 100 ? 'rgba(255,51,85,0.7)' :
+            (l.loading||0) > 80 ? 'rgba(255,102,0,0.7)' :
+            (l.loading||0) > 60 ? 'rgba(255,204,0,0.7)' : 'rgba(0,212,255,0.6)'
+          ),
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#6a90b0', font: { size: 8 } }, grid: { color: '#0f2a45' } },
+          y: { max: 150, ticks: { color: '#6a90b0', font: { size: 8 } }, grid: { color: '#0f2a45' } }
+        }
+      }
+    };
+  }, [results]);
+
+  useChart(lossRef, lossConfig || { type: 'bar', data: { labels: [], datasets: [] }, options: {} });
+
+  return (
+    <div style={{ padding: '8px' }}>
+      <div className="section-label">Line Loading Heatmap</div>
+      <div style={{ height: '120px', marginBottom: '8px' }}><canvas ref={lossRef} /></div>
+      {results?.lineFlows && (
+        <table className="result-table">
+          <thead><tr><th>Line</th><th>P (pu)</th><th>Q (pu)</th><th>Load%</th></tr></thead>
+          <tbody>
+            {results.lineFlows.map(flow => {
+              const cls = (flow.loading||0) > 100 ? 'val-critical' : (flow.loading||0) > 80 ? 'val-warning' : 'val-normal';
+              return (
+                <tr key={flow.id}>
+                  <td>{flow.id}</td>
+                  <td style={{color:'#00d4ff'}}>{(flow.P||0).toFixed(3)}</td>
+                  <td style={{color:'#8855ff'}}>{(flow.Q||0).toFixed(3)}</td>
+                  <td className={cls}>{(flow.loading||0).toFixed(1)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
+
+// ==========================================
+// ECONOMIC DISPATCH TAB
+// ==========================================
+function DispatchTab({ dispatchResult, buses }) {
+  if (!dispatchResult || dispatchResult.length === 0) return (
+    <div style={{ color: 'var(--text-dim)', textAlign: 'center', padding: '20px', fontFamily: 'Share Tech Mono', fontSize: '11px' }}>
+      ▶ Run Economic Dispatch
+    </div>
+  );
+
+  const totalCost = dispatchResult.reduce((s, g) => s + (g.cost || 0), 0);
+  return (
+    <div style={{ padding: '8px' }}>
+      <div className="metric-card">
+        <div className="metric-label">Total Generation Cost</div>
+        <div className="metric-value">{totalCost.toFixed(2)}</div>
+        <div style={{ fontSize: '9px', color: 'var(--text-dim)' }}>$/hr</div>
+      </div>
+      <table className="result-table" style={{ marginTop: '8px' }}>
+        <thead><tr><th>Gen</th><th>Pmin</th><th>P opt</th><th>Pmax</th><th>Cost</th></tr></thead>
+        <tbody>
+          {dispatchResult.map(g => (
+            <tr key={g.id}>
+              <td>{g.id}</td>
+              <td style={{color:'var(--text-dim)'}}>{g.Pmin?.toFixed(2)}</td>
+              <td className="val-normal">{g.P?.toFixed(3)}</td>
+              <td style={{color:'var(--text-dim)'}}>{g.Pmax?.toFixed(2)}</td>
+              <td style={{color:'#ffcc00'}}>{g.cost?.toFixed(2)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// ==========================================
+// LEFT PANEL
+// ==========================================
+function LeftPanel({ buses, lines, setBuses, setLines, selectedId, setSelectedId, onNotify }) {
+  const [addType, setAddType] = useState('bus');
+  const [newBus, setNewBus] = useState({ name: '', type: 'pq', v: 1.0, pg: 0, pl: 0, qg: 0, ql: 0, pmax: 1, pmin: 0 });
+  const [newLine, setNewLine] = useState({ from: '', to: '', r: 0.04, x: 0.12, b: 0.03, rating: 1.0 });
+
+  const selectedBus = buses.find(b => b.id === selectedId);
+
+  const addBus = () => {
+    if (!newBus.name.trim()) return;
+    const id = 'B' + (Date.now() % 10000);
+    const bus = { ...newBus, id, x: 200 + Math.random() * 200, y: 150 + Math.random() * 150 };
+    setBuses(prev => [...prev, bus]);
+    setNewBus({ name: '', type: 'pq', v: 1.0, pg: 0, pl: 0, qg: 0, ql: 0, pmax: 1, pmin: 0 });
+    onNotify(`Bus ${id} added`, 'success');
+  };
+
+  const addLine = () => {
+    if (!newLine.from || !newLine.to) return;
+    const id = 'L' + newLine.from.replace('B','') + newLine.to.replace('B','');
+    setLines(prev => [...prev, { ...newLine, id, active: true }]);
+    onNotify(`Line ${id} added`, 'success');
+  };
+
+  const removeBus = (id) => {
+    setBuses(prev => prev.filter(b => b.id !== id));
+    setLines(prev => prev.filter(l => l.from !== id && l.to !== id));
+    onNotify(`Bus ${id} removed`, 'warn');
+  };
+
+  const updateBus = (id, field, value) => {
+    setBuses(prev => prev.map(b => b.id === id ? { ...b, [field]: isNaN(value) ? value : Number(value) } : b));
+  };
+
+  const toggleLine = (id) => {
+    setLines(prev => prev.map(l => l.id === id ? { ...l, active: !l.active } : l));
+  };
+
+  const loadTemplate = (template) => {
+    if (template === 'ieee5') {
+      setBuses(defaultBuses);
+      setLines(defaultLines);
+      onNotify('IEEE 5-Bus system loaded', 'info');
+    } else if (template === 'ieee3') {
+      setBuses([
+        { id: 'B1', name: 'Bus-1 (Slack)', type: 'slack', v: 1.0, angle: 0, pg: 0, pl: 0, qg: 0, ql: 0, x: 200, y: 200, pmax: 3, pmin: 0 },
+        { id: 'B2', name: 'Bus-2 (Gen)', type: 'pv', v: 1.05, angle: 0, pg: 0.6, pl: 0.1, qg: 0, ql: 0, x: 380, y: 150, pmax: 1.0, pmin: 0.1 },
+        { id: 'B3', name: 'Bus-3 (Load)', type: 'pq', v: 1.0, angle: 0, pg: 0, pl: 0.7, qg: 0, ql: 0.2, x: 380, y: 290, pmax: 0, pmin: 0 },
+      ]);
+      setLines([
+        { id: 'L12', from: 'B1', to: 'B2', r: 0.01, x: 0.05, b: 0.02, rating: 1.0, active: true },
+        { id: 'L13', from: 'B1', to: 'B3', r: 0.02, x: 0.06, b: 0.02, rating: 0.8, active: true },
+        { id: 'L23', from: 'B2', to: 'B3', r: 0.03, x: 0.09, b: 0.01, rating: 0.6, active: true },
+      ]);
+      onNotify('3-Bus system loaded', 'info');
+    }
+  };
+
+  return (
+    <div className="panel left-panel">
+      <div className="panel-header">
+        <div className="icon" />
+        Grid Builder
+      </div>
+      <div className="panel-body">
+        <div className="section-label">Templates</div>
+        <div className="component-grid">
+          <button className="comp-btn" onClick={() => loadTemplate('ieee3')}>
+            <span className="comp-icon">⚡</span>3-Bus
+          </button>
+          <button className="comp-btn" onClick={() => loadTemplate('ieee5')}>
+            <span className="comp-icon">🔋</span>IEEE 5-Bus
+          </button>
+        </div>
+
+        <div className="section-label">Add Component</div>
+        <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
+          {['bus', 'line'].map(t => (
+            <button key={t} className={`mode-btn ${addType===t?'active':''}`} onClick={() => setAddType(t)} style={{ flex: 1 }}>
+              {t.toUpperCase()}
+            </button>
+          ))}
+        </div>
+
+        {addType === 'bus' && (
+          <>
+            <div className="form-row">
+              <div className="form-label">Bus Name</div>
+              <input className="form-input" value={newBus.name} onChange={e => setNewBus(p => ({...p, name: e.target.value}))} placeholder="e.g. Bus-6" />
+            </div>
+            <div className="form-row">
+              <div className="form-label">Type</div>
+              <select className="form-select" value={newBus.type} onChange={e => setNewBus(p => ({...p, type: e.target.value}))}>
+                <option value="slack">Slack (Reference)</option>
+                <option value="pv">PV (Generator)</option>
+                <option value="pq">PQ (Load)</option>
+              </select>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px' }}>
+              <div className="form-row">
+                <div className="form-label">V (pu)</div>
+                <input className="form-input" type="number" step="0.01" value={newBus.v} onChange={e => setNewBus(p => ({...p, v: +e.target.value}))} />
+              </div>
+              <div className="form-row">
+                <div className="form-label">Pg (pu)</div>
+                <input className="form-input" type="number" step="0.01" value={newBus.pg} onChange={e => setNewBus(p => ({...p, pg: +e.target.value}))} />
+              </div>
+              <div className="form-row">
+                <div className="form-label">Pl (pu)</div>
+                <input className="form-input" type="number" step="0.01" value={newBus.pl} onChange={e => setNewBus(p => ({...p, pl: +e.target.value}))} />
+              </div>
+              <div className="form-row">
+                <div className="form-label">Ql (pu)</div>
+                <input className="form-input" type="number" step="0.01" value={newBus.ql} onChange={e => setNewBus(p => ({...p, ql: +e.target.value}))} />
+              </div>
+            </div>
+            <button className="btn success" style={{ width: '100%', marginTop: '4px' }} onClick={addBus}>+ ADD BUS</button>
+          </>
+        )}
+
+        {addType === 'line' && (
+          <>
+            <div className="form-row">
+              <div className="form-label">From Bus</div>
+              <select className="form-select" value={newLine.from} onChange={e => setNewLine(p => ({...p, from: e.target.value}))}>
+                <option value="">Select...</option>
+                {buses.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+              </select>
+            </div>
+            <div className="form-row">
+              <div className="form-label">To Bus</div>
+              <select className="form-select" value={newLine.to} onChange={e => setNewLine(p => ({...p, to: e.target.value}))}>
+                <option value="">Select...</option>
+                {buses.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+              </select>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px' }}>
+              {[['R (pu)', 'r', 0.001], ['X (pu)', 'x', 0.001], ['B (pu)', 'b', 0.001], ['Rating (pu)', 'rating', 0.1]].map(([label, field, step]) => (
+                <div className="form-row" key={field}>
+                  <div className="form-label">{label}</div>
+                  <input className="form-input" type="number" step={step} value={newLine[field]} onChange={e => setNewLine(p => ({...p, [field]: +e.target.value}))} />
+                </div>
+              ))}
+            </div>
+            <button className="btn success" style={{ width: '100%', marginTop: '4px' }} onClick={addLine}>+ ADD LINE</button>
+          </>
+        )}
+
+        <div className="section-label" style={{ marginTop: '8px' }}>Bus List ({buses.length})</div>
+        {buses.map((bus, idx) => (
+          <div key={bus.id} className={`bus-list-item ${bus.id === selectedId ? 'selected' : ''}`} onClick={() => setSelectedId(bus.id === selectedId ? null : bus.id)}>
+            <div className="bus-dot" style={{ background: bus.type === 'slack' ? 'var(--accent-cyan)' : bus.type === 'pv' ? 'var(--accent-green)' : 'var(--text-secondary)' }} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '11px', fontWeight: 600 }}>{bus.name.split(' ')[0]}</div>
+              <div style={{ fontSize: '9px', color: 'var(--text-dim)', fontFamily: 'Share Tech Mono' }}>Pg:{bus.pg?.toFixed(2)} Pl:{bus.pl?.toFixed(2)}</div>
+            </div>
+            <span className={`bus-type-badge badge-${bus.type}`}>{bus.type.toUpperCase()}</span>
+            <button onClick={e => { e.stopPropagation(); removeBus(bus.id); }} style={{ background: 'none', border: 'none', color: 'var(--text-dim)', cursor: 'pointer', padding: '2px', fontSize: '12px' }}>✕</button>
+          </div>
+        ))}
+
+        {selectedBus && (
+          <>
+            <div className="section-label" style={{ marginTop: '8px' }}>Edit: {selectedBus.name.split(' ')[0]}</div>
+            {[['Voltage (pu)', 'v', 0.001], ['Pg (pu)', 'pg', 0.01], ['Pl (pu)', 'pl', 0.01], ['Ql (pu)', 'ql', 0.01]].map(([label, field, step]) => (
+              <div className="form-row" key={field}>
+                <div className="form-label">{label}</div>
+                <input className="form-input" type="number" step={step} value={selectedBus[field]} onChange={e => updateBus(selectedBus.id, field, e.target.value)} />
+              </div>
+            ))}
+          </>
+        )}
+
+        <div className="section-label" style={{ marginTop: '8px' }}>Line Control</div>
+        {lines.map(line => (
+          <div key={line.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
+            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: line.active ? 'var(--accent-green)' : 'var(--accent-red)', flexShrink: 0 }} />
+            <span style={{ flex: 1, fontSize: '10px', fontFamily: 'Share Tech Mono' }}>{line.id}</span>
+            <span style={{ fontSize: '9px', color: 'var(--text-dim)' }}>{line.from}↔{line.to}</span>
+            <button onClick={() => toggleLine(line.id)} className="btn" style={{ padding: '2px 6px', fontSize: '9px' }}>
+              {line.active ? 'TRIP' : 'CLOSE'}
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// BOTTOM PANEL
+// ==========================================
+function BottomPanel({ logs, steps, insights, mode }) {
+  const logEndRef = useRef(null);
+  useEffect(() => { logEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [logs]);
+
+  return (
+    <div className="bottom-panel">
+      {/* LOGS */}
+      <div className="bottom-section" style={{ flex: '0 0 280px' }}>
+        <div className="bottom-header">
+          <span style={{ color: 'var(--accent-green)' }}>●</span>
+          Console Log
+        </div>
+        <div className="log-area">
+          {logs.map((log, i) => (
+            <div key={i} className="log-entry">
+              <span className="log-time">{log.time}</span>
+              <span className={`log-text ${log.type}`}>{log.msg}</span>
+            </div>
+          ))}
+          <div ref={logEndRef} />
+        </div>
+      </div>
+
+      {/* STEP EXPLANATION */}
+      <div className="bottom-section" style={{ flex: '0 0 320px' }}>
+        <div className="bottom-header">
+          <span style={{ color: 'var(--accent-cyan)' }}>◈</span>
+          Step Explanation {mode === 'beginner' && <span style={{ color: 'var(--accent-green)', marginLeft: '6px' }}>LEARN MODE</span>}
+        </div>
+        <div className="log-area">
+          {steps.length === 0 && (
+            <div style={{ color: 'var(--text-dim)', fontSize: '10px', fontFamily: 'Share Tech Mono', padding: '8px' }}>
+              Run analysis to see step-by-step derivations...
+            </div>
+          )}
+          {steps.map((step, i) => (
+            <div key={i} className="step-box">
+              <div style={{ fontWeight: 600, color: 'var(--accent-cyan)', fontSize: '11px', marginBottom: '2px' }}>
+                Step {step.step}: {step.desc}
+              </div>
+              {step.maxMismatch !== null && step.maxMismatch !== undefined && (
+                <div className="step-eq">
+                  ‖ΔP, ΔQ‖ = {step.maxMismatch.toExponential(4)}
+                  {step.maxMismatch < 1e-6 ? ' ✓ CONVERGED' : ''}
+                </div>
+              )}
+              {mode !== 'research' && i === 0 && (
+                <div style={{ fontSize: '9px', color: 'var(--text-secondary)', marginTop: '3px' }}>
+                  Y-Bus matrix built from network admittances: Y_ij = -y_ij for off-diagonal, Σy_ik for diagonal
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* INSIGHTS */}
+      <div className="bottom-section">
+        <div className="bottom-header">
+          <span style={{ color: 'var(--accent-purple)' }}>◆</span>
+          AI Insights & Recommendations
+        </div>
+        <div className="log-area" style={{ padding: '4px' }}>
+          {insights.length === 0 && (
+            <div style={{ color: 'var(--text-dim)', fontSize: '10px', fontFamily: 'Share Tech Mono', padding: '8px' }}>
+              AI analysis will appear here after running simulations...
+            </div>
+          )}
+          {insights.map((ins, i) => (
+            <div key={i} className={`insight-card ${ins.type}`}>
+              <div className="insight-title">{ins.title}</div>
+              <div className="insight-body" dangerouslySetInnerHTML={{ __html: ins.body }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// MAIN APPLICATION
+// ==========================================
+function App() {
+  const [buses, setBuses] = useState(defaultBuses);
+  const [lines, setLines] = useState(defaultLines);
+  const [selectedId, setSelectedId] = useState(null);
+  const [results, setResults] = useState(null);
+  const [faultResult, setFaultResult] = useState(null);
+  const [stabilityResult, setStabilityResult] = useState(null);
+  const [dispatchResult, setDispatchResult] = useState(null);
+  const [activeTab, setActiveTab] = useState('loadflow');
+  const [mode, setMode] = useState('advanced');
+  const [view3D, setView3D] = useState(false);
+  const [logs, setLogs] = useState([{ time: '00:00:00', msg: 'SmartGrid Digital Twin v2.0 initialized', type: 'info' }]);
+  const [steps, setSteps] = useState([]);
+  const [insights, setInsights] = useState([]);
+  const [running, setRunning] = useState('');
+  const [timeStep, setTimeStep] = useState(0);
+  const [notification, setNotification] = useState(null);
+  const [aiOpen, setAiOpen] = useState(false);
+  const [disturbOpen, setDisturbOpen] = useState(false);
+  const [disturbance, setDisturbance] = useState({ load: 1.0, faultSev: 0.5, genOut: 0 });
+  const [challengeOpen, setChallengeOpen] = useState(false);
+  const [modelValid, setModelValid] = useState(true);
+
+  const addLog = useCallback((msg, type = 'info') => {
+    const now = new Date();
+    const time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+    setLogs(prev => [...prev.slice(-49), { time, msg, type }]);
+  }, []);
+
+  const notify = useCallback((msg, type = 'info') => {
+    setNotification({ msg, type });
+  }, []);
+
+  const handleBusMove = useCallback((id, pos) => {
+    setBuses(prev => prev.map(b => b.id === id ? { ...b, ...pos } : b));
+    setModelValid(false);
+  }, []);
+
+  const runLoadFlow = useCallback(async () => {
+    if (buses.length < 2) { addLog('Error: Need at least 2 buses', 'error'); return; }
+    if (!buses.find(b => b.type === 'slack')) { addLog('Error: No slack bus defined', 'error'); return; }
+    setRunning('loadflow');
+    addLog('Starting Newton-Raphson load flow...', 'info');
+    addLog(`System: ${buses.length} buses, ${lines.length} lines`, 'info');
+
+    await new Promise(r => setTimeout(r, 300));
+
+    const res = PowerEngine.newtonRaphson(buses, lines);
+    setResults(res);
+    setSteps(res.steps);
+    setModelValid(true);
+
+    if (res.converged) {
+      addLog(`✓ Converged in ${res.iterations} iterations`, 'success');
+      addLog(`Total losses: ${res.totalLoss.toFixed(4)} pu`, 'info');
+
+      // Generate insights
+      const newInsights = [];
+      const lowVolts = buses.filter((b, i) => (res.voltages[i] || 1.0) < 0.95);
+      const highLoading = res.lineFlows.filter(l => (l.loading || 0) > 80);
+
+      if (lowVolts.length > 0) {
+        newInsights.push({
+          type: 'warn', title: '⚠ Low Voltage Detected',
+          body: `Buses <b>${lowVolts.map(b=>b.name.split(' ')[0]).join(', ')}</b> below 0.95 pu. <br>
+                 <b>Why:</b> High reactive power demand or insufficient reactive compensation.<br>
+                 <b>Fix:</b> Add shunt capacitors or increase generator reactive output.`
+        });
+      }
+      if (highLoading.length > 0) {
+        newInsights.push({
+          type: 'warn', title: '⚡ Line Overloading Risk',
+          body: `Lines <b>${highLoading.map(l=>l.id).join(', ')}</b> near thermal limits.<br>
+                 <b>Why:</b> Power flow concentration on few paths.<br>
+                 <b>Fix:</b> Add parallel lines or redistribute generation dispatch.`
+        });
+      }
+      if (res.totalLoss > 0.05) {
+        newInsights.push({
+          type: 'info', title: '📊 System Losses Analysis',
+          body: `Total losses: <b>${(res.totalLoss*100).toFixed(2)}%</b> of generation.<br>
+                 Losses proportional to I²R. Minimize by optimizing voltage profile and reducing reactive flows.`
+        });
+      }
+      if (newInsights.length === 0) {
+        newInsights.push({
+          type: 'success', title: '✓ System Operating Normally',
+          body: `All voltages within ±5% nominal. No thermal violations detected. System losses at <b>${(res.totalLoss*100).toFixed(3)}%</b>.`
+        });
+      }
+      setInsights(newInsights);
+      setActiveTab('loadflow');
+    } else {
+      addLog(`✗ Failed to converge after ${res.iterations} iterations`, 'error');
+      addLog('Check system configuration — possibly ill-conditioned', 'error');
+    }
+
+    setRunning('');
+  }, [buses, lines, addLog]);
+
+  const runFaultAnalysis = useCallback(async () => {
+    const faultBusId = selectedId || buses[2]?.id || buses[0]?.id;
+    if (!faultBusId) { addLog('Error: No bus selected for fault', 'error'); return; }
+    setRunning('fault');
+    addLog(`Running 3-phase fault on ${faultBusId}...`, 'warn');
+
+    await new Promise(r => setTimeout(r, 400));
+
+    const res = PowerEngine.faultAnalysis(buses, lines, faultBusId, '3phase');
+    setFaultResult(res);
+    setActiveTab('fault');
+
+    addLog(`✗ FAULT at ${faultBusId}: If = ${res.faultCurrentPU.toFixed(3)} pu`, 'error');
+    addLog(`Clearing time: ${res.clearingTime.toFixed(3)} s`, 'warn');
+
+    setInsights(prev => [{
+      type: 'error', title: '🔴 Critical Fault Event',
+      body: `3-phase fault at <b>${faultBusId}</b>. Current = <b>${res.faultCurrentPU.toFixed(3)} pu (${res.faultCurrentKA.toFixed(3)} kA)</b>.<br>
+             <b>Protection action:</b> Zone 1 relay operation. Breaker trip in ${res.clearingTime.toFixed(3)}s.<br>
+             <b>Post-fault:</b> Rebalance loads and check island formation.`
+    }, ...prev.slice(0, 2)]);
+
+    setRunning('');
+    notify(`Fault at ${faultBusId}: ${res.faultCurrentPU.toFixed(2)} pu`, 'error');
+  }, [buses, lines, selectedId, addLog, notify]);
+
+  const runStability = useCallback(async () => {
+    setRunning('stability');
+    addLog('Running transient stability analysis (5s)...', 'info');
+    await new Promise(r => setTimeout(r, 500));
+
+    const res = PowerEngine.stabilityAnalysis(buses, lines, 5, 0.05);
+    setStabilityResult(res);
+    setActiveTab('stability');
+
+    addLog(`Stability: ${res.stable ? '✓ STABLE' : '✗ UNSTABLE'}`, res.stable ? 'success' : 'error');
+    addLog(`Final rotor angle: ${res.rotorAngles[res.rotorAngles.length-1]?.toFixed(2)}°`, 'info');
+
+    setInsights(prev => [{
+      type: res.stable ? 'success' : 'error',
+      title: res.stable ? '✓ Transient Stability Maintained' : '✗ Loss of Synchronism',
+      body: res.stable
+        ? `System maintains synchronism. Rotor oscillations damp out. CCT not exceeded.<br><b>Swing equation:</b> 2H/ωs · dω/dt = Pm - Pe - D·ω`
+        : `Rotor angle exceeds stability boundary. <b>Action:</b> Reduce fault clearing time, add PSS, or shed load.`
+    }, ...prev.slice(0, 2)]);
+
+    setRunning('');
+  }, [buses, lines, addLog]);
+
+  const runDispatch = useCallback(async () => {
+    setRunning('dispatch');
+    addLog('Running economic dispatch...', 'info');
+    await new Promise(r => setTimeout(r, 200));
+
+    const totalLoad = buses.reduce((s, b) => s + (b.pl || 0), 0);
+    const res = PowerEngine.economicDispatch(buses, totalLoad);
+    setDispatchResult(res);
+    setActiveTab('dispatch');
+
+    const totalCost = res.reduce((s, g) => s + (g.cost || 0), 0);
+    addLog(`Dispatch complete. Total cost: $${totalCost.toFixed(2)}/hr`, 'success');
+    setRunning('');
+  }, [buses, addLog]);
+
+  const runFullAnalysis = useCallback(async () => {
+    addLog('=== FULL ANALYSIS PIPELINE ===', 'info');
+    await runLoadFlow();
+    await new Promise(r => setTimeout(r, 200));
+    await runStability();
+    await new Promise(r => setTimeout(r, 200));
+    await runDispatch();
+    addLog('=== PIPELINE COMPLETE ===', 'success');
+    notify('Full analysis pipeline complete', 'success');
+  }, [runLoadFlow, runStability, runDispatch, notify, addLog]);
+
+  const runDemoMode = useCallback(async () => {
+    setBuses(defaultBuses);
+    setLines(defaultLines);
+    addLog('Demo mode: Loading IEEE 5-bus system...', 'info');
+    await new Promise(r => setTimeout(r, 300));
+    await runLoadFlow();
+    notify('Demo mode active — IEEE 5-Bus system', 'info');
+  }, [runLoadFlow, notify, addLog]);
+
+  const getAISuggestions = () => {
+    const suggestions = [];
+    if (results) {
+      const lowV = buses.filter((b, i) => (results.voltages[i] || 1.0) < 0.95);
+      if (lowV.length > 0) suggestions.push('Add shunt capacitor at ' + lowV[0].name);
+      const overloaded = results.lineFlows?.filter(l => (l.loading||0) > 90);
+      if (overloaded?.length > 0) suggestions.push('Reduce load on ' + overloaded[0].id);
+      suggestions.push('Enable parallel path for redundancy');
+      suggestions.push('Adjust slack bus voltage to 1.05 pu');
+    } else {
+      suggestions.push('Run Load Flow first for analysis');
+      suggestions.push('Load IEEE 5-Bus template');
+    }
+    return suggestions;
+  };
+
+  const timelineLabels = ['T=0 Normal', 'T=1 Fault', 'T=2 Trip', 'T=3 Recovery'];
+
+  const handleTimeStep = (val) => {
+    setTimeStep(Number(val));
+    const t = Number(val);
+    if (t === 0) {
+      setFaultResult(null);
+      setLines(prev => prev.map(l => ({...l, active: true})));
+      addLog('Timeline: t=0 — Normal operation', 'info');
+    } else if (t === 1) {
+      runFaultAnalysis();
+      addLog('Timeline: t=1 — Fault applied', 'warn');
+    } else if (t === 2) {
+      const faultBus = selectedId || buses[2]?.id;
+      const connectedLines = lines.filter(l => l.from === faultBus || l.to === faultBus);
+      if (connectedLines.length > 0) {
+        setLines(prev => prev.map((l, i) => i === lines.indexOf(connectedLines[0]) ? {...l, active: false} : l));
+      }
+      addLog('Timeline: t=2 — Breaker tripped', 'warn');
+    } else if (t === 3) {
+      setFaultResult(null);
+      setLines(prev => prev.map(l => ({...l, active: true})));
+      runLoadFlow();
+      addLog('Timeline: t=3 — System recovery', 'success');
+    }
+  };
+
+  return (
+    <div className="app-shell">
+      {/* TOP BAR */}
+      <div className="topbar">
+        <div className="logo">SMART<span>GRID</span> ⚡ TWIN</div>
+        <div className="sep" />
+        <div className="btn-group">
+          <button className={`btn ${running==='loadflow'?'running':''}`} onClick={runLoadFlow}>
+            ⚡ Load Flow
+          </button>
+          <button className={`btn danger ${running==='fault'?'running':''}`} onClick={runFaultAnalysis}>
+            ⚠ Fault
+          </button>
+          <button className={`btn ${running==='stability'?'running':''}`} onClick={runStability} style={{color:'var(--accent-yellow)', borderColor:'#ffcc0066'}}>
+            〜 Stability
+          </button>
+          <button className={`btn ${running==='dispatch'?'running':''}`} onClick={runDispatch} style={{color:'var(--accent-purple)', borderColor:'#88558866'}}>
+            $ Dispatch
+          </button>
+        </div>
+        <div className="sep" />
+        <div className="btn-group">
+          <button className="btn primary" onClick={runDemoMode}>▶ DEMO</button>
+          <button className="btn" onClick={runFullAnalysis} style={{color:'#fff', borderColor:'#ffffff33'}}>⚙ FULL ANALYSIS</button>
+          <button className="btn" onClick={() => setAiOpen(p => !p)} style={{color:'var(--accent-purple)'}}>🤖 AI ASSIST</button>
+          <button className="btn" onClick={() => setDisturbOpen(p => !p)}>⚡ DISTURB</button>
+          <button className="btn danger" onClick={() => setChallengeOpen(p => !p)}>🎮 CHALLENGE</button>
+        </div>
+        <div className="sep" />
+        <div className="btn-group">
+          {['beginner','advanced','research'].map(m => (
+            <button key={m} className={`mode-btn ${mode===m?'active':''}`} onClick={() => { setMode(m); addLog(`Mode: ${m.toUpperCase()}`, 'info'); }}>
+              {m.charAt(0).toUpperCase() + m.slice(1)}
+            </button>
+          ))}
+        </div>
+        <div className="status-pill">
+          <div className={`status-dot ${modelValid ? 'green' : 'yellow'}`} />
+          {modelValid ? 'MODEL VALID' : 'NEEDS RECALC'} &nbsp;|&nbsp;
+          {buses.length}B {lines.length}L &nbsp;|&nbsp;
+          {running ? running.toUpperCase() + '...' : 'IDLE'}
+        </div>
+      </div>
+
+      {/* LEFT PANEL */}
+      <LeftPanel
+        buses={buses} lines={lines}
+        setBuses={setBuses} setLines={setLines}
+        selectedId={selectedId} setSelectedId={setSelectedId}
+        onNotify={notify}
+      />
+
+      {/* CENTER CANVAS */}
+      <div className="center-panel">
+        {!view3D && (
+          <GridCanvas
+            buses={buses} lines={lines}
+            results={results} faultResult={faultResult}
+            selectedId={selectedId} onSelect={setSelectedId}
+            onBusMove={handleBusMove}
+            mode={mode} timeStep={timeStep} disturbance={disturbance}
+          />
+        )}
+
+        <div id="three-container" className={view3D ? 'visible' : ''}>
+          <ThreeView
+            buses={buses} lines={lines}
+            results={results} faultResult={faultResult}
+            active={view3D}
+          />
+        </div>
+
+        {/* Toolbar */}
+        <div className="canvas-toolbar">
+          <button className="btn" title="Zoom In" style={{padding:'4px 6px'}}>+</button>
+          <button className="btn" title="Zoom Out" style={{padding:'4px 6px'}}>−</button>
+          <button className="btn" title="Reset View" style={{padding:'4px 6px'}}>⌖</button>
+          <button className="btn" title="Fit All" style={{padding:'4px 6px'}}>⊡</button>
+        </div>
+
+        {/* View Toggle */}
+        <div className="view-toggle">
+          <button className={`btn ${!view3D ? 'active' : ''}`} onClick={() => setView3D(false)}>2D</button>
+          <button className={`btn ${view3D ? 'active' : ''}`} onClick={() => { setView3D(true); addLog('3D view activated', 'info'); }}>3D</button>
+        </div>
+
+        {/* Timeline */}
+        <div className="timeline-bar">
+          <div className="timeline-label">
+            <span>⏱ SCENARIO TIMELINE</span>
+            <span style={{ color: 'var(--accent-cyan)' }}>{timelineLabels[timeStep]}</span>
+          </div>
+          <input type="range" min="0" max="3" step="1" value={timeStep}
+            onChange={e => handleTimeStep(e.target.value)}
+            className={timeStep === 1 ? 'danger-range' : timeStep === 2 ? 'warning-range' : ''}
+          />
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '8px', color: 'var(--text-dim)', marginTop: '2px', fontFamily: 'Share Tech Mono' }}>
+            {timelineLabels.map(l => <span key={l}>{l}</span>)}
+          </div>
+        </div>
+
+        {/* Disturbance Panel */}
+        <div className={`disturbance-panel ${disturbOpen ? 'open' : ''}`}>
+          <div style={{ fontFamily: 'Orbitron', fontSize: '9px', letterSpacing: '2px', color: 'var(--accent-cyan)', marginBottom: '10px' }}>DISTURBANCE CTRL</div>
+          <div className="slider-row">
+            <label><span>Load Factor</span><span style={{color:'var(--accent-cyan)',fontFamily:'Share Tech Mono'}}>{disturbance.load.toFixed(2)}x</span></label>
+            <input type="range" min="0.5" max="2.0" step="0.05" value={disturbance.load}
+              onChange={e => { setDisturbance(p => ({...p, load: +e.target.value})); setModelValid(false); }}
+            />
+          </div>
+          <div className="slider-row">
+            <label><span>Fault Severity</span><span style={{color:'var(--accent-red)',fontFamily:'Share Tech Mono'}}>{(disturbance.faultSev*100).toFixed(0)}%</span></label>
+            <input type="range" min="0" max="1" step="0.05" value={disturbance.faultSev}
+              onChange={e => setDisturbance(p => ({...p, faultSev: +e.target.value}))}
+            />
+          </div>
+          <div className="slider-row">
+            <label><span>Gen Outage</span><span style={{color:'var(--accent-yellow)',fontFamily:'Share Tech Mono'}}>{disturbance.genOut}</span></label>
+            <input type="range" min="0" max={buses.filter(b=>b.type!=='pq').length} step="1" value={disturbance.genOut}
+              onChange={e => setDisturbance(p => ({...p, genOut: +e.target.value}))}
+            />
+          </div>
+          <button className="btn danger" style={{width:'100%',marginTop:'8px'}} onClick={runLoadFlow}>APPLY & RUN</button>
+        </div>
+
+        {/* AI Panel */}
+        <div className={`ai-panel ${aiOpen ? 'open' : ''}`}>
+          <div className="ai-header">🤖 AI ENGINEERING ASSISTANT</div>
+          <div className="ai-body">
+            <div className="ai-msg">
+              <b>System Analysis:</b> {buses.length} buses, {lines.length} lines.
+              {results ? ` Load flow converged in ${results.iterations} iterations.` : ' No simulation results yet.'}
+            </div>
+            <div style={{ fontSize: '10px', color: 'var(--text-dim)', marginBottom: '8px', fontFamily: 'Share Tech Mono' }}>SUGGESTED ACTIONS:</div>
+            {getAISuggestions().map((s, i) => (
+              <div key={i} className="ai-suggestion" onClick={() => { addLog(`AI suggestion applied: ${s}`, 'info'); }}>
+                ◈ {s}
+              </div>
+            ))}
+            <button className="btn" style={{ width: '100%', marginTop: '8px', color: 'var(--accent-purple)', borderColor: 'var(--accent-purple)66' }}
+              onClick={() => { runFullAnalysis(); setAiOpen(false); }}>
+              🔧 FIX MY SYSTEM
+            </button>
+          </div>
+        </div>
+
+        {/* Challenge Mode */}
+        <div className={`challenge-banner ${challengeOpen ? 'open' : ''}`}>
+          <div className="challenge-title">🎮 GRID CHALLENGE</div>
+          <div style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '12px' }}>
+            The grid is unstable! Bus-3 is experiencing a voltage collapse.<br/>
+            <b style={{color:'var(--accent-yellow)'}}>Mission:</b> Restore all voltages to 0.95–1.05 pu range.
+          </div>
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+            <button className="btn danger" onClick={() => { runFaultAnalysis(); setChallengeOpen(false); }}>START FAULT</button>
+            <button className="btn success" onClick={() => { setChallengeOpen(false); notify('Challenge mode exited', 'info'); }}>EXIT</button>
+          </div>
+        </div>
+      </div>
+
+      {/* RIGHT PANEL */}
+      <div className="panel right-panel">
+        <div className="tabs">
+          {[
+            ['loadflow', '⚡ Flow'],
+            ['fault', '⚠ Fault'],
+            ['stability', '〜 Stab'],
+            ['dispatch', '$ Disp'],
+            ['analytics', '📊 Analytics'],
+          ].map(([id, label]) => (
+            <div key={id} className={`tab ${activeTab===id?'active':''}`} onClick={() => setActiveTab(id)}>{label}</div>
+          ))}
+        </div>
+        <div style={{ flex: 1, overflowY: 'auto', scrollbarWidth: 'thin', scrollbarColor: 'var(--border-glow) transparent' }}>
+          {activeTab === 'loadflow' && <LoadFlowTab results={results} buses={buses} />}
+          {activeTab === 'fault' && <FaultTab faultResult={faultResult} buses={buses} />}
+          {activeTab === 'stability' && <StabilityTab stabilityResult={stabilityResult} />}
+          {activeTab === 'dispatch' && <DispatchTab dispatchResult={dispatchResult} buses={buses} />}
+          {activeTab === 'analytics' && <AnalyticsTab results={results} buses={buses} lines={lines} />}
+        </div>
+
+        {/* Summary Cards */}
+        <div style={{ padding: '6px', borderTop: '1px solid var(--border)', background: 'var(--bg-deep)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px' }}>
+            <div className="metric-card" style={{ padding: '6px 8px' }}>
+              <div className="metric-label">BUSES</div>
+              <div style={{ fontFamily: 'Orbitron', fontSize: '16px', color: 'var(--accent-cyan)' }}>{buses.length}</div>
+            </div>
+            <div className="metric-card" style={{ padding: '6px 8px' }}>
+              <div className="metric-label">LOSSES</div>
+              <div style={{ fontFamily: 'Orbitron', fontSize: '16px', color: results ? 'var(--accent-yellow)' : 'var(--text-dim)' }}>
+                {results ? `${(results.totalLoss*100).toFixed(2)}%` : '—'}
+              </div>
+            </div>
+            <div className="metric-card" style={{ padding: '6px 8px' }}>
+              <div className="metric-label">ITERS</div>
+              <div style={{ fontFamily: 'Orbitron', fontSize: '16px', color: results?.converged ? 'var(--accent-green)' : 'var(--text-dim)' }}>
+                {results ? results.iterations : '—'}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* BOTTOM PANEL */}
+      <BottomPanel logs={logs} steps={steps} insights={insights} mode={mode} />
+
+      {/* NOTIFICATION */}
+      {notification && (
+        <Notification msg={notification.msg} type={notification.type} onDone={() => setNotification(null)} />
+      )}
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>

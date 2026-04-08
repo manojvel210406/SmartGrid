@@ -1,0 +1,7 @@
+line_id,from_bus,to_bus,R_pu,X_pu,B_pu,rating_pu,active
+L12,B1,B2,0.02,0.06,0.06,1.0,true
+L13,B1,B3,0.08,0.24,0.05,0.8,true
+L24,B2,B4,0.06,0.18,0.04,0.7,true
+L34,B3,B4,0.06,0.18,0.04,0.6,true
+L45,B4,B5,0.04,0.12,0.03,0.5,true
+L25,B2,B5,0.10,0.30,0.02,0.4,true

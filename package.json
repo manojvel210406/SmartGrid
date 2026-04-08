@@ -1,0 +1,56 @@
+{
+  "name": "smartgrid-digital-twin",
+  "version": "2.0.0",
+  "description": "Industry-grade Smart Grid Digital Twin Simulator with AI insights, 3D visualization, and educational capabilities",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve . -l 8080",
+    "dev": "npx live-server --port=8080 --open=index.html",
+    "build": "echo 'No build step required - single file app'",
+    "lint": "echo 'Inline JSX via Babel standalone'"
+  },
+  "keywords": [
+    "power-systems",
+    "digital-twin",
+    "smart-grid",
+    "simulation",
+    "load-flow",
+    "newton-raphson",
+    "fault-analysis",
+    "three.js",
+    "react",
+    "scada",
+    "energy"
+  ],
+  "author": "SmartGrid Digital Twin",
+  "license": "MIT",
+  "devDependencies": {
+    "serve": "^14.0.0",
+    "live-server": "^1.2.2"
+  },
+  "browserslist": [
+    "last 2 Chrome versions",
+    "last 2 Firefox versions",
+    "last 2 Safari versions",
+    "last 2 Edge versions"
+  ],
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/smartgrid-digital-twin"
+  },
+  "features": {
+    "loadFlow": "Newton-Raphson iterative solver",
+    "faultAnalysis": "Z-Bus method, 3-phase and asymmetric",
+    "transientStability": "Swing equation numerical integration",
+    "economicDispatch": "Lambda iteration optimization",
+    "visualization2D": "HTML5 Canvas with animated particles",
+    "visualization3D": "Three.js with orbit controls",
+    "aiInsights": "Pattern-based engineering recommendations",
+    "learningMode": "Step-by-step equation derivations",
+    "challengeMode": "Gamified grid stability scenarios",
+    "timeline": "Scenario playback (normal→fault→trip→recovery)"
+  }
+}

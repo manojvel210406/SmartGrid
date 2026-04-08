@@ -1,0 +1,6 @@
+bus_id,bus_name,type,voltage_pu,angle_deg,Pg_pu,Pl_pu,Qg_pu,Ql_pu,Pmax_pu,Pmin_pu
+B1,Bus-1 (Slack),slack,1.06,0,0,0,0,0,3.0,0
+B2,Bus-2 (Gen),pv,1.045,0,0.4,0.2,0,0.1,1.0,0.1
+B3,Bus-3 (Load),pq,1.0,0,0,0.45,0,0.15,0,0
+B4,Bus-4 (Load),pq,1.0,0,0,0.40,0,0.05,0,0
+B5,Bus-5 (Gen),pv,1.01,0,0.3,0,0,0,0.8,0.1
